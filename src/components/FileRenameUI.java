@@ -9,11 +9,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.filechooser.*;
 
-/*
- * FileChooserDemo.java uses these files:
- *   images/Open16.gif
- *   images/Save16.gif
- */
+
 public class FileRenameUI extends JPanel implements ActionListener {
 	static private final String newline = "\n";
 	JButton folderButton, fileButton, renameButton;
