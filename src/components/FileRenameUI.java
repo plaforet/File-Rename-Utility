@@ -1,43 +1,12 @@
-/*
- * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- *   - Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *
- *   - Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *
- *   - Neither the name of Oracle or the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package components;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.SwingUtilities;
 import javax.swing.filechooser.*;
 
 /*
@@ -48,10 +17,12 @@ import javax.swing.filechooser.*;
 public class FileRenameUI extends JPanel implements ActionListener {
 	static private final String newline = "\n";
 	JButton folderButton, fileButton, renameButton;
+	JRadioButton copyToggle, renameToggle;
 	JTextArea log;
 	JFileChooser dirChooser;
 	JFileChooser fileChooser;
 	String folderPath, filePath;
+	boolean copy = true;
 
 	public FileRenameUI() {
 		super(new BorderLayout());
@@ -89,18 +60,34 @@ public class FileRenameUI extends JPanel implements ActionListener {
 		renameButton = new JButton("Rename");
 		renameButton.addActionListener(this);
 
+		// Radio Buttons for renaming options
+		copy = true;
+		copyToggle = new JRadioButton("Copy");
+		copyToggle.setSelected(true);
+		renameToggle = new JRadioButton("Rename");
+		ButtonGroup copyOptions = new ButtonGroup();
+		copyOptions.add(copyToggle);
+		copyOptions.add(renameToggle);
+		copyToggle.addActionListener(this);
+		renameToggle.addActionListener(this);
+
 		// For layout purposes, put the buttons in a separate panel
 		JPanel buttonPanel = new JPanel(); // use FlowLayout
 		buttonPanel.add(folderButton);
 		buttonPanel.add(fileButton);
 		buttonPanel.add(renameButton);
 
+		JPanel optionsPanel = new JPanel();
+		optionsPanel.add(copyToggle);
+		optionsPanel.add(renameToggle);
+
 		JPanel pathPanel = new JPanel();
 		pathPanel.setLayout(new BoxLayout(pathPanel, BoxLayout.PAGE_AXIS));
 
 		// Add the buttons and the log to this panel.
 		add(buttonPanel, BorderLayout.PAGE_START);
-		add(logScrollPane, BorderLayout.CENTER);
+		add(optionsPanel, BorderLayout.LINE_START);
+		add(logScrollPane, BorderLayout.AFTER_LAST_LINE);
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -145,14 +132,36 @@ public class FileRenameUI extends JPanel implements ActionListener {
 				input = new Scanner(nameCSV);
 				ArrayList<String> names = NameFormatter.Renamer(input);
 
-			log.append("Renaming...");
-			Renamer.rename(names, fileList);
-			log.append("Rename complete" + newline);
+				log.append("Renaming...");
+				// Renamer.renameAll(names, fileList);
+
+				Arrays.sort(fileList);
+				int skipFile = 0;
+				String copyText = "Renaming: ";
+				if(copy) {
+					copyText = "Copying: ";
+					
+				}
+				for (int i = 0; i < fileList.length && i < names.size() + skipFile - 1; i++) {
+					if (fileList[i].isHidden()) {
+						skipFile++;
+						log.append("Skipped file" + fileList[i].getName());
+					} else {
+						log.append(copyText + fileList[i].getName() + newline);
+						Renamer.rename(names.get(i - skipFile + 1), fileList[i], false);
+					}
+
+				}
+				log.append("Rename complete" + newline);
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			
+
+		} else if (e.getSource() == copyToggle) {
+			copy = true;
+		} else if (e.getSource() == renameToggle) {
+			copy = false;
 		}
 	}
 
