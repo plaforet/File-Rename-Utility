@@ -144,7 +144,7 @@ public class FileRenameUI extends JPanel implements ActionListener {
 						log.append("Skipped file" + fileList[i].getName());
 					} else {
 						log.append(copyText + fileList[i].getName() + newline);
-						Renamer.rename(names.get(i - skipFile + 1), fileList[i], false);
+						Renamer.rename(names.get(i - skipFile + 1), fileList[i]);
 					}
 
 				}
